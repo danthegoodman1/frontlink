@@ -27,12 +27,20 @@ interface FrontlinkState {
   /**
    * Number of dependent states or functions on a room
    */
-  connectedRooms: Map<string, number>
+  connectedRooms: Set<string>
 }
 
 function generateID(): string {
   // TODO: generate ID
   return ""
+}
+
+function stateUpdateInternalEmitterID(stateName: string): string {
+  return "StateUpdate::" + stateName
+}
+
+function callFunctionInternalEmitterID(stateName: string): string {
+  return "CallFunction::" + stateName
 }
 
 export const Emitter = new EventEmitter()
@@ -44,7 +52,7 @@ export function FrontlinkProvider(
   }>
 ) {
   const conn = useRef<WebSocket | null>(null)
-  const subscribedRooms = useRef<Map<string, number> | null>(null)
+  const connectedRooms = useRef<Set<string> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
 
   if (conn.current === null) {
@@ -61,7 +69,14 @@ export function FrontlinkProvider(
         return
       }
 
-      // TODO: handle message
+      switch (msg.MessageType) {
+        case "StateUpdate":
+          internalEmitter.emit(msg.RoomID)
+          break
+
+        default:
+          break
+      }
     }
     conn.current.onclose = (event) => {
       Emitter.emit(EventType.SocketClosed, {
@@ -75,8 +90,8 @@ export function FrontlinkProvider(
     }
   }
 
-  if (subscribedRooms.current === null) {
-    subscribedRooms.current = new Map<string, number>()
+  if (connectedRooms.current === null) {
+    connectedRooms.current = new Set<string>()
   }
 
   if (msgDedupe.current === null) {
@@ -115,50 +130,50 @@ export function FrontlinkProvider(
   }
 
   function subscribeToRoom(roomID: string) {
-    if (subscribedRooms.current === null || conn.current === null) {
+    if (connectedRooms.current === null || conn.current === null) {
       return
     }
 
-    if (!subscribedRooms.current.has(roomID)) {
-      subscribedRooms.current.set(roomID, 0)
-      emitMessage({
-        MessageType: "Subscribe",
-        MessageID: generateID(),
-        RoomID: roomID,
-      } as Omit<SubscribeMessage, "MessageMS">)
+    if (connectedRooms.current.has(roomID)) {
+      console.error(
+        "tried to sub to room",
+        roomID,
+        "but a subscription already existed!"
+      )
+      // TODO: emit
+      return
     }
 
-    subscribedRooms.current.set(
-      roomID,
-      (subscribedRooms.current.get(roomID) ?? 0) + 1
-    )
+    emitMessage({
+      MessageType: "Subscribe",
+      MessageID: generateID(),
+      RoomID: roomID,
+    } as Omit<SubscribeMessage, "MessageMS">)
+    connectedRooms.current.add(roomID)
+    // TODO: emit
   }
 
   function unsubFromRoom(roomID: string) {
-    if (subscribedRooms.current === null || conn.current === null) {
+    if (connectedRooms.current === null || conn.current === null) {
       return
     }
 
-    if (!subscribedRooms.current.has(roomID)) {
+    if (!connectedRooms.current.has(roomID)) {
       console.warn(
         "tried to unsub from room",
         roomID,
         "without any existing known connections"
       )
+      // TODO: emit
       return
-    }
-
-    subscribedRooms.current.set(
-      roomID,
-      (subscribedRooms.current.get(roomID) ?? 1) - 1
-    )
-
-    if (subscribedRooms.current.get(roomID)! <= 0) {
+    } else {
       emitMessage({
         MessageType: "Unsubscribe",
         MessageID: generateID(),
         RoomID: roomID,
       } as Omit<UnsubscribeMessage, "MessageMS">)
+      connectedRooms.current.delete(roomID)
+      // TODO: emit
     }
   }
 
@@ -166,7 +181,7 @@ export function FrontlinkProvider(
     <Ctx.Provider
       value={{
         conn: conn.current,
-        connectedRooms: subscribedRooms.current,
+        connectedRooms: connectedRooms.current,
         subscribeToRoom,
         unsubFromRoom,
         emitSetState,
@@ -184,9 +199,10 @@ type StateType<T> = T | ((v: T) => T)
 type SetterFunction<T> = (value: T | StateType<T>) => void
 
 export function useSharedState<T>(
-  roomID: string,
+  uniqueStateID: string,
   initialValue: T
 ): [T, SetterFunction<T>] {
+  const internalEmitterID = stateUpdateInternalEmitterID(uniqueStateID)
   const ctx = useContext(Ctx)
   const [state, setState] = useState<T>(initialValue)
 
@@ -200,7 +216,7 @@ export function useSharedState<T>(
         return
       }
 
-      ctx.emitSetState(roomID, val)
+      ctx.emitSetState(uniqueStateID, val)
     },
     [state]
   )
@@ -211,12 +227,12 @@ export function useSharedState<T>(
       return
     }
 
-    ctx.subscribeToRoom(roomID)
-    internalEmitter.on(roomID, setter)
+    ctx.subscribeToRoom(uniqueStateID)
+    internalEmitter.on(internalEmitterID, setter)
 
     return () => {
-      ctx.unsubFromRoom(roomID)
-      internalEmitter.removeListener(roomID, setter)
+      ctx.unsubFromRoom(uniqueStateID)
+      internalEmitter.removeListener(internalEmitterID, setter)
     }
   }, [ctx])
 
@@ -224,9 +240,10 @@ export function useSharedState<T>(
 }
 
 export function useSharedFunction<T extends any[]>(
-  roomID: string,
+  uniqueFunctionID: string,
   func: (...args: T) => void
 ) {
+  const internalEmitterID = callFunctionInternalEmitterID(uniqueFunctionID)
   const ctx = useContext(Ctx)
 
   const caller = (...args: T) => {
@@ -237,14 +254,14 @@ export function useSharedFunction<T extends any[]>(
 
     func(...args)
     ctx.emitCallFunction(
-      roomID,
+      uniqueFunctionID,
       args.map((arg) => JSON.stringify(arg))
     )
   }
 
   function callerWrapper(stringArgs: string[]) {
     const args: any = stringArgs.map((arg) => JSON.parse(arg))
-    console.debug("calling function", roomID, "with args", args)
+    console.debug("calling function", uniqueFunctionID, "with args", args)
     caller(...args)
   }
 
@@ -254,12 +271,12 @@ export function useSharedFunction<T extends any[]>(
       return
     }
 
-    ctx.subscribeToRoom(roomID)
-    internalEmitter.on(roomID, callerWrapper)
+    ctx.subscribeToRoom(uniqueFunctionID)
+    internalEmitter.on(internalEmitterID, callerWrapper)
 
     return () => {
-      ctx.unsubFromRoom(roomID)
-      internalEmitter.removeListener(roomID, callerWrapper)
+      ctx.unsubFromRoom(uniqueFunctionID)
+      internalEmitter.removeListener(internalEmitterID, callerWrapper)
     }
   }, [ctx])
 

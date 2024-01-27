@@ -10,4 +10,10 @@ export enum EventType {
   DeserializationError,
   SocketClosed,
   SocketError,
+  /**
+   * When a state or function tries to subscribe to a room with the same name
+   */
+  RoomCollisionPrevented,
+  RoomSubscribed,
+  RoomUnsubscribed,
 }
