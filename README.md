@@ -11,7 +11,7 @@ npm i frontlink
 Next we need to wrap our components in a `FrontlinkProvider`. You can do this as far down as you need, and you may want to wait until you have known user information so you can attach auth to your URL.
 
 ```tsx
-import { FrontlinkProvider } from "./frontlink/provider"
+import { FrontlinkProvider } from "frontlink"
 
 function App() {
   return (
