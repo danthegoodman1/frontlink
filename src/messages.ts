@@ -18,6 +18,10 @@ export interface Message {
    * not all other clients!
    */
   MessageMS: number
+  /**
+   * Added by the server
+   */
+  ClientID: string
 
   RoomID: string
 
