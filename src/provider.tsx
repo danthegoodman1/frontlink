@@ -247,12 +247,13 @@ export function useSharedFunction<T extends any[]>(
   const ctx = useContext(Ctx)
 
   const caller = (...args: T) => {
+    func(...args)
+
     if (!ctx) {
       console.error("did not have context for shared function caller")
       return
     }
 
-    func(...args)
     ctx.emitCallFunction(
       uniqueFunctionID,
       args.map((arg) => JSON.stringify(arg))
