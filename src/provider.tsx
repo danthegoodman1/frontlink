@@ -70,6 +70,8 @@ export function FrontlinkProvider(
         return
       }
 
+      console.debug("msg receieved", msg)
+
       if (msgDedupe.current!.has(msg.MessageID)) {
         console.warn("duplicate message detected, dropping")
         // TODO: emit
@@ -292,10 +294,7 @@ export function useSharedFunction<T extends any[]>(
       return
     }
 
-    ctx.emitCallFunction(
-      uniqueFunctionID,
-      args.map((arg) => JSON.stringify(arg))
-    )
+    ctx.emitCallFunction(uniqueFunctionID, args)
   }
 
   function callerWrapper(stringArgs: string[]) {
