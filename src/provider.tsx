@@ -62,6 +62,7 @@ export function FrontlinkProvider(
       try {
         msg = JSON.parse(event.data)
       } catch (error) {
+        console.error("Failed to parse", error)
         Emitter.emit(EventType.DeserializationError, {
           // TODO: type this? is this correct payload?
           event,
@@ -71,7 +72,7 @@ export function FrontlinkProvider(
 
       switch (msg.MessageType) {
         case "StateUpdate":
-          internalEmitter.emit(msg.RoomID)
+          internalEmitter.emit(msg.RoomID, msg.Value)
           break
 
         default:
@@ -107,13 +108,13 @@ export function FrontlinkProvider(
     msgDedupe.current.add(msg.MessageID)
 
     // Send to socket
-    console.debug("emitting", msg, conn.current.readyState)
+    console.log("emitting", msg, conn.current.readyState)
     if (conn.current.readyState !== conn.current.OPEN) {
       // Buffer it up
-      console.debug("socket not open, spinning")
+      console.log("socket not open, spinning")
       const interval = setInterval(() => {
         if (conn.current?.readyState === conn.current?.OPEN) {
-          console.debug("going")
+          console.log("going")
           conn.current?.send(JSON.stringify(msg))
           Emitter.emit(EventType.MessageEmitted, {
             msg,
@@ -121,7 +122,7 @@ export function FrontlinkProvider(
           clearInterval(interval)
           return
         }
-        console.debug("socket still not open...")
+        console.log("socket still not open...")
       }, 300)
     } else {
       conn.current.send(JSON.stringify(msg))
@@ -132,7 +133,7 @@ export function FrontlinkProvider(
   }
 
   function emitSetState(roomID: string, val: any) {
-    console.debug(roomID, val)
+    console.log(roomID, val)
     emitMessage({
       MessageID: generateID(),
       RoomID: roomID,
