@@ -1,4 +1,6 @@
-# frontlink
+# Frontlink
+
+React realtime updates with your backend in a few lines of code
 
 ## Getting started
 
