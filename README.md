@@ -96,7 +96,7 @@ You can then emit your token. If you use this method, drop messages (and don't s
 
 ## Listening to events
 
-A [comprehensive suite of events](src/events.ts) are emitted
+A [comprehensive suite of events](src/events.ts) are emitted for your app to react in response to.
 
 ## Building a backend
 
