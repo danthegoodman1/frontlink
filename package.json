@@ -3,6 +3,10 @@
   "version": "0.0.2",
   "description": "",
   "main": "dist/index.js",
+  "repository": {
+    "url": "https://github.com/danthegoodman1/frontlink"
+  },
+  "homepage": "https://frontlink.dev",
   "scripts": {
     "build": "tsc"
   },
