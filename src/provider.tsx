@@ -70,9 +70,24 @@ export function FrontlinkProvider(
         return
       }
 
+      if (msgDedupe.current!.has(msg.MessageID)) {
+        console.warn("duplicate message detected, dropping")
+        // TODO: emit
+        return
+      }
+
       switch (msg.MessageType) {
         case "StateUpdate":
-          internalEmitter.emit(msg.RoomID, msg.Value)
+          internalEmitter.emit(
+            stateUpdateInternalEmitterID(msg.RoomID),
+            msg.Value
+          )
+          break
+        case "CallFunction":
+          internalEmitter.emit(
+            callFunctionInternalEmitterID(msg.RoomID),
+            msg.Args
+          )
           break
 
         default:
@@ -251,11 +266,11 @@ export function useSharedState<T>(
     }
 
     ctx.subscribeToRoom(uniqueStateID)
-    internalEmitter.on(internalEmitterID, setter)
+    internalEmitter.on(internalEmitterID, setState)
 
     return () => {
       ctx.unsubFromRoom(uniqueStateID)
-      internalEmitter.removeListener(internalEmitterID, setter)
+      internalEmitter.removeListener(internalEmitterID, setState)
     }
   }, [ctx])
 
@@ -286,7 +301,7 @@ export function useSharedFunction<T extends any[]>(
   function callerWrapper(stringArgs: string[]) {
     const args: any = stringArgs.map((arg) => JSON.parse(arg))
     console.debug("calling function", uniqueFunctionID, "with args", args)
-    caller(...args)
+    func(...args)
   }
 
   useEffect(() => {
