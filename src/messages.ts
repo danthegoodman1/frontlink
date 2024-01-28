@@ -1,8 +1,10 @@
 export type MessageType =
   | "StateUpdate"
   | "CallFunction"
-  | "Subscribe"
-  | "Unsubscribe"
+  | "SubscribeState"
+  | "SubscribeFunction"
+  | "UnsubscribeState"
+  | "UnsubscribeFunction"
   | "RoommateSubscribed"
   | "RoommateUnsubscribed"
 
@@ -40,11 +42,11 @@ export interface Message {
 }
 
 export interface SubscribeMessage extends Message {
-  MessageType: "Subscribe"
+  MessageType: "SubscribeState" | "SubscribeFunction"
 }
 
 export interface UnsubscribeMessage extends Message {
-  MessageType: "Unsubscribe"
+  MessageType: "UnsubscribeState" | "UnsubscribeFunction"
 }
 
 export interface StateUpdateMessage extends Message {

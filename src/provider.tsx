@@ -20,8 +20,12 @@ import { EventType } from "./events"
 
 interface FrontlinkState {
   conn: WebSocket
-  subscribeToRoom(roomID: string): void
-  unsubFromRoom(roomID: string): void
+  subscribeToRoom(
+    roomID: string,
+    kind: "State" | "Function",
+    initialValue?: any
+  ): void
+  unsubFromRoom(roomID: string, kind: "State" | "Function"): void
   emitSetState(stateID: string, value: any): void
   emitCallFunction(functionID: string, value: string[]): void
   /**
@@ -166,7 +170,11 @@ export function FrontlinkProvider(
     } as Omit<CallFunctionMessage, "MessageMS">)
   }
 
-  function subscribeToRoom(roomID: string) {
+  function subscribeToRoom(
+    roomID: string,
+    kind: "State" | "Function",
+    initialValue?: any
+  ) {
     if (connectedRooms.current === null || conn.current === null) {
       return
     }
@@ -182,15 +190,16 @@ export function FrontlinkProvider(
     }
 
     emitMessage({
-      MessageType: "Subscribe",
+      MessageType: kind === "State" ? "SubscribeState" : "SubscribeFunction",
       MessageID: generateID(),
       RoomID: roomID,
+      Value: initialValue,
     } as Omit<SubscribeMessage, "MessageMS">)
     connectedRooms.current.add(roomID)
     // TODO: emit
   }
 
-  function unsubFromRoom(roomID: string) {
+  function unsubFromRoom(roomID: string, kind: "State" | "Function") {
     if (connectedRooms.current === null || conn.current === null) {
       return
     }
@@ -205,7 +214,8 @@ export function FrontlinkProvider(
       return
     } else {
       emitMessage({
-        MessageType: "Unsubscribe",
+        MessageType:
+          kind === "State" ? "UnsubscribeState" : "UnsubscribeFunction",
         MessageID: generateID(),
         RoomID: roomID,
       } as Omit<UnsubscribeMessage, "MessageMS">)
@@ -267,11 +277,11 @@ export function useSharedState<T>(
       return
     }
 
-    ctx.subscribeToRoom(uniqueStateID)
+    ctx.subscribeToRoom(uniqueStateID, "State", initialValue)
     internalEmitter.on(internalEmitterID, setState)
 
     return () => {
-      ctx.unsubFromRoom(uniqueStateID)
+      ctx.unsubFromRoom(uniqueStateID, "State")
       internalEmitter.removeListener(internalEmitterID, setState)
     }
   }, [ctx])
@@ -309,11 +319,11 @@ export function useSharedFunction<T extends any[]>(
       return
     }
 
-    ctx.subscribeToRoom(uniqueFunctionID)
+    ctx.subscribeToRoom(uniqueFunctionID, "Function")
     internalEmitter.on(internalEmitterID, callerWrapper)
 
     return () => {
-      ctx.unsubFromRoom(uniqueFunctionID)
+      ctx.unsubFromRoom(uniqueFunctionID, "Function")
       internalEmitter.removeListener(internalEmitterID, callerWrapper)
     }
   }, [ctx])
