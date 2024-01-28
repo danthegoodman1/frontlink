@@ -10,9 +10,9 @@ export type MessageType =
 
 export interface Message {
   /**
-   * A distinct ID generated on the client at emission time
+   * A distinct ID generated on the server at receive time, used for deduplication
    */
-  MessageID: string
+  MessageID?: string
 
   MessageType: MessageType
 

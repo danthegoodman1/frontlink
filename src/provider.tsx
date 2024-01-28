@@ -16,7 +16,7 @@ import {
   SubscribeMessage,
   UnsubscribeMessage,
 } from "./messages"
-import { EventType } from "./events"
+import * as EventType from "./events"
 
 interface FrontlinkState {
   conn: WebSocket
@@ -32,11 +32,6 @@ interface FrontlinkState {
    * Number of dependent states or functions on a room
    */
   connectedRooms: Set<string>
-}
-
-function generateID(): string {
-  // TODO: generate ID
-  return ""
 }
 
 function stateUpdateInternalEmitterID(stateName: string): string {
@@ -76,7 +71,7 @@ export function FrontlinkProvider(
 
       console.debug("msg receieved", msg)
 
-      if (msgDedupe.current!.has(msg.MessageID)) {
+      if (msgDedupe.current!.has(msg.MessageID!)) {
         console.warn("duplicate message detected, dropping")
         // TODO: emit
         return
@@ -125,9 +120,6 @@ export function FrontlinkProvider(
       return
     }
 
-    // Dedupe the message locally so we ignore it
-    msgDedupe.current.add(msg.MessageID)
-
     // Send to socket
     console.log("emitting", msg, conn.current.readyState)
     if (conn.current.readyState !== conn.current.OPEN) {
@@ -156,7 +148,6 @@ export function FrontlinkProvider(
   function emitSetState(roomID: string, val: any) {
     console.log(roomID, val)
     emitMessage({
-      MessageID: generateID(),
       RoomID: roomID,
       Value: JSON.stringify(val),
     } as Omit<StateUpdateMessage, "MessageMS">)
@@ -164,7 +155,6 @@ export function FrontlinkProvider(
 
   function emitCallFunction(roomID: string, ...args: any[]) {
     emitMessage({
-      MessageID: generateID(),
       RoomID: roomID,
       Args: args.map((arg) => JSON.stringify(arg)),
     } as Omit<CallFunctionMessage, "MessageMS">)
@@ -191,7 +181,6 @@ export function FrontlinkProvider(
 
     emitMessage({
       MessageType: kind === "State" ? "SubscribeState" : "SubscribeFunction",
-      MessageID: generateID(),
       RoomID: roomID,
       Value: initialValue,
     } as Omit<SubscribeMessage, "MessageMS">)
@@ -216,7 +205,6 @@ export function FrontlinkProvider(
       emitMessage({
         MessageType:
           kind === "State" ? "UnsubscribeState" : "UnsubscribeFunction",
-        MessageID: generateID(),
         RoomID: roomID,
       } as Omit<UnsubscribeMessage, "MessageMS">)
       connectedRooms.current.delete(roomID)
