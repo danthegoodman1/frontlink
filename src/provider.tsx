@@ -46,6 +46,13 @@ const internalEmitter = new EventEmitter()
 export function FrontlinkProvider(
   props: PropsWithChildren<{
     api: string
+    opts?: {
+      /**
+       * The maximum number of milliseconds that messages will be buffered locally
+       * if the socket is not connected. Default 10_000
+       */
+      maxBufferMS?: number
+    }
   }>
 ) {
   const conn = useRef<WebSocket | null>(null)
@@ -120,13 +127,27 @@ export function FrontlinkProvider(
     }
 
     // Send to socket
-    console.log("emitting", msg, conn.current.readyState)
+    console.debug("emitting", msg, conn.current.readyState)
     if (conn.current.readyState !== conn.current.OPEN) {
       // Buffer it up
-      console.log("socket not open, spinning")
+      console.debug("socket not open, spinning")
+      const started = new Date().getTime()
       const interval = setInterval(() => {
+        if (
+          new Date().getTime() >
+          started + (props.opts?.maxBufferMS ?? 10_000)
+        ) {
+          // Drop them
+          clearInterval(interval)
+          console.error(
+            "frontlink did not connect to socket in time, dropping message"
+          )
+          // internal emit?
+          return
+        }
+
         if (conn.current?.readyState === conn.current?.OPEN) {
-          console.log("going")
+          console.debug("going")
           conn.current?.send(JSON.stringify(msg))
           Emitter.emit(EventType.MessageEmitted, {
             msg,
@@ -134,7 +155,8 @@ export function FrontlinkProvider(
           clearInterval(interval)
           return
         }
-        console.log("socket still not open...")
+
+        console.debug("socket still not open...")
       }, 300)
     } else {
       conn.current.send(JSON.stringify(msg))
@@ -145,7 +167,7 @@ export function FrontlinkProvider(
   }
 
   function emitSetState(roomID: string, val: any) {
-    console.log(roomID, val)
+    console.debug(roomID, val)
     emitMessage({
       RoomID: roomID,
       Value: JSON.stringify(val),
