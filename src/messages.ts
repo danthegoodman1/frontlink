@@ -57,12 +57,12 @@ export interface CallFunctionMessage extends Message {
   Args: string[]
 }
 
-export interface RoommateConnectedMessage extends Message {
-  MessageType: "RoommateConnected"
+export interface RoommateSubscribedMessage extends Message {
+  MessageType: "RoommateSubscribed"
   ClientID: string
 }
 
-export interface RoommateDisconnectedMessage extends Message {
-  MessageType: "RoommateDisconnected"
+export interface RoommateUnsubscribedMessage extends Message {
+  MessageType: "RoommateUnsubscribed"
   ClientID: string
 }
