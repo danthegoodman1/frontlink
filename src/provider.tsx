@@ -97,6 +97,20 @@ export function FrontlinkProvider(
           )
           break
 
+        case "RoommateSubscribed":
+          Emitter.emit(EventType.RoommateSubscribed, {
+            roomID: msg.RoomID,
+            clientID: msg.ClientID,
+          })
+          break
+
+        case "RoommateUnsubscribed":
+          Emitter.emit(EventType.RoommateUnsubscribed, {
+            roomID: msg.RoomID,
+            clientID: msg.ClientID,
+          })
+          break
+
         default:
           break
       }

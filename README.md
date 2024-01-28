@@ -92,4 +92,70 @@ const authMe = useSharedFunction("authMe", (token: string) => {
 
 You can then emit your token. If you use this method, drop messages (and don't send) to unauthed clients rather than dropping connections or not allowing them in rooms.
 
+## Listening to events
+
+A [comprehensive suite of events](src/events.ts) are emitted
+
+## Building a backend
+
+Messages are emitted to the backend as stringified JSON in the schema found in [`messages.ts`](/src/messages.ts).
+
 Frontlink expects that joining a room will work regardless of auth state or permissions. It's up to you on the backend to determine whether it will be able to send/receive messages to a given room, as it will only ever resubscribe if the component unmounts and remounts.
+
+### Basic flow
+
+There are only a few critical pieces to building a minimal backend:
+
+1. Clients connect to websocket - assign them some ClientID
+2. Clients subscribe to a room - Store this client ID to that room until they unsubscribe ("room-client index"). Emit a `RoommateSubscribed` ([see schema](/src/messages.ts)) message to all but the new client if presence is relevant
+3. Clients emit `SetState` and `CallFunction` messages to the backend. The backend should then relay these to all other connected clients in that room (do not send back to emitting client). Set the `ClientID` and `MessageMS` of the messages.
+4. When clients unsubscribe from a room, remove them from the room-client index. Emit a `RoommateUnsubscribed` ([see schema](/src/messages.ts)) message to all but the new client if presence is relevant.
+5. When clients disconnect, remove them from all room-client indexes
+
+### Seeding state
+
+When a `useSharedState` or `useSharedFunction` is mounted, they will emit a `SubscribeState` and `SubscribeFunction` event respectively to the backend. For the `SubscribeState` event, the payload includes the `Value` property, which is the value of `JSON.stringify(initialValue)`. You can use this to seed the state for the room, and for clients that subsequently connect.
+
+You can also seed the state on the client by immediately emitting a `SetState` message back to them to update their state.
+
+### Emitting events from the server
+
+You can choose to emit `SetState` and `CallFunction` messages from the server to subscribed clients. For example you may want real-time updates to clients based on actions from an admin panel, or some global event like a notification triggering a toast.
+
+View [`messages.ts`](/src/messages.ts) for the schema of the JSON payload.
+
+Ensure to set the `MessageMS` to the current time, and leave `ClientID` blank to indicate it's from the server (or set to some constant like `"server"`).
+
+### Removing clients from a room on the server side
+
+Just remove them from the room-client index and drop incoming messages to that room if the client does not belong to the room.
+
+### Persisting room state
+
+If you would like to persist `SetState` calls, it's best to process a room linearizably (in order) based on the order `SetState` events are received by the backend. When a room is ressurected, you can restore the state from persistent storage.
+
+You can use non-linearizable datastores (e.g. S3, most databases) by processing them in order from memory. Based on your requirements, you can choose to collapse them to some interval so you are only writing once per interval (e.g. once per second).
+
+When a client subscribes to a room, you can immediately serve it a `SetState` event to sync the state with the room.
+
+### Presence
+
+Use the `Emitter` import to listen for `RoommateSubscribe` and `RoommateUnsubscribe`:
+
+```tsx
+import { Emitter, EventTypes, Messages } from "frontlink"
+
+Emitter.on(
+  EventTypes.RoommateSubscribe,
+  (msg: Messages.RoommateSubscribedMessage) => {
+    // Present
+  }
+)
+
+Emitter.on(
+  EventTypes.RoommateUnsubscribe,
+  (msg: Messages.RoommateUnsubscribedMessage) => {
+    // Removed
+  }
+)
+```

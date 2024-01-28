@@ -18,6 +18,8 @@ export const SocketError = "SocketError"
 export const RoomCollisionPrevented = "RoomCollisionPrevented"
 export const RoomSubscribed = "RoomSubscribed"
 export const RoomUnsubscribed = "RoomUnsubscribed"
+export const RoommateSubscribed = "RoommateSubscribed"
+export const RoommateUnsubscribed = "RoommateUnsubscribed"
 export const DuplicateMessageReceived = "DuplicateMessageReceived"
 
 export interface EventPayload {
@@ -39,4 +41,8 @@ export interface EventPayload {
    * If based on a room operation
    */
   roomKind?: RoomKind
+  /**
+   * RoommateSubscribed and RoommateUnsubscribed events
+   */
+  clientID?: string
 }
