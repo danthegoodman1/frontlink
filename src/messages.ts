@@ -19,9 +19,9 @@ export interface Message {
    */
   MessageMS: number
   /**
-   * Added by the server
+   * Added by the server, ID of the invoking client (undefined if sent by server)
    */
-  ClientID: string
+  ClientID?: string
 
   RoomID: string
 
