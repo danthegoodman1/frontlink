@@ -1,3 +1,6 @@
+import { Message } from "./messages"
+import { RoomKind } from "./provider"
+
 export const MessageEmitted = "MessageEmitted"
 /**
  * Deduplicated (will not emit this event when a duplicate event comes in)
@@ -15,3 +18,25 @@ export const SocketError = "SocketError"
 export const RoomCollisionPrevented = "RoomCollisionPrevented"
 export const RoomSubscribed = "RoomSubscribed"
 export const RoomUnsubscribed = "RoomUnsubscribed"
+export const DuplicateMessageReceived = "DuplicateMessageReceived"
+
+export interface EventPayload {
+  /**
+   * If the event is based on a WebSocket event, or failure processing a message
+   */
+  event?: MessageEvent<any>
+
+  /**
+   * If the event is based on the successfully parsed contents of a message
+   */
+  msg?: Message
+
+  /**
+   * If based on a room operation
+   */
+  roomID?: string
+  /**
+   * If based on a room operation
+   */
+  roomKind?: RoomKind
+}

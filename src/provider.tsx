@@ -18,14 +18,12 @@ import {
 } from "./messages"
 import * as EventType from "./events"
 
+export type RoomKind = "State" | "Function"
+
 interface FrontlinkState {
   conn: WebSocket
-  subscribeToRoom(
-    roomID: string,
-    kind: "State" | "Function",
-    initialValue?: any
-  ): void
-  unsubFromRoom(roomID: string, kind: "State" | "Function"): void
+  subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any): void
+  unsubFromRoom(roomID: string, kind: RoomKind): void
   emitSetState(stateID: string, value: any): void
   emitCallFunction(functionID: string, value: string[]): void
   /**
@@ -63,7 +61,6 @@ export function FrontlinkProvider(
       } catch (error) {
         console.error("Failed to parse", error)
         Emitter.emit(EventType.DeserializationError, {
-          // TODO: type this? is this correct payload?
           event,
         })
         return
@@ -73,7 +70,9 @@ export function FrontlinkProvider(
 
       if (msgDedupe.current!.has(msg.MessageID!)) {
         console.warn("duplicate message detected, dropping")
-        // TODO: emit
+        Emitter.emit(EventType.DuplicateMessageReceived, {
+          msg,
+        })
         return
       }
 
@@ -160,11 +159,7 @@ export function FrontlinkProvider(
     } as Omit<CallFunctionMessage, "MessageMS">)
   }
 
-  function subscribeToRoom(
-    roomID: string,
-    kind: "State" | "Function",
-    initialValue?: any
-  ) {
+  function subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any) {
     if (connectedRooms.current === null || conn.current === null) {
       return
     }
@@ -175,7 +170,9 @@ export function FrontlinkProvider(
         roomID,
         "but a subscription already existed!"
       )
-      // TODO: emit
+      Emitter.emit(EventType.RoomCollisionPrevented, {
+        roomID,
+      })
       return
     }
 
@@ -185,21 +182,22 @@ export function FrontlinkProvider(
       Value: initialValue,
     } as Omit<SubscribeMessage, "MessageMS">)
     connectedRooms.current.add(roomID)
-    // TODO: emit
+    Emitter.emit(EventType.RoomSubscribed, {
+      roomID,
+    })
   }
 
-  function unsubFromRoom(roomID: string, kind: "State" | "Function") {
+  function unsubFromRoom(roomID: string, kind: RoomKind) {
     if (connectedRooms.current === null || conn.current === null) {
       return
     }
 
     if (!connectedRooms.current.has(roomID)) {
-      console.warn(
+      console.error(
         "tried to unsub from room",
         roomID,
-        "without any existing known connections"
+        "without any existing known connections. This is a bug, please report"
       )
-      // TODO: emit
       return
     } else {
       emitMessage({
@@ -208,7 +206,9 @@ export function FrontlinkProvider(
         RoomID: roomID,
       } as Omit<UnsubscribeMessage, "MessageMS">)
       connectedRooms.current.delete(roomID)
-      // TODO: emit
+      Emitter.emit(EventType.RoomUnsubscribed, {
+        roomID,
+      })
     }
   }
 

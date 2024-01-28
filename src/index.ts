@@ -1,5 +1,17 @@
-import { FrontlinkProvider } from "./provider"
+import {
+  FrontlinkProvider,
+  RoomKind,
+  useSharedFunction,
+  useSharedState,
+} from "./provider"
 import * as Events from "./events"
 import * as Messages from "./messages"
 
-export { Events, FrontlinkProvider, Messages }
+export {
+  Events,
+  FrontlinkProvider,
+  Messages,
+  RoomKind,
+  useSharedFunction,
+  useSharedState,
+}
