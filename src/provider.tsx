@@ -107,13 +107,32 @@ export function FrontlinkProvider(
     msgDedupe.current.add(msg.MessageID)
 
     // Send to socket
-    conn.current.send(JSON.stringify(msg))
-    Emitter.emit(EventType.MessageEmitted, {
-      msg,
-    })
+    console.log("emitting", msg, conn.current.readyState)
+    if (conn.current.readyState !== conn.current.OPEN) {
+      // Buffer it up
+      console.log("socket not open, spinning")
+      const interval = setInterval(() => {
+        if (conn.current?.readyState === conn.current?.OPEN) {
+          console.log("going")
+          conn.current?.send(JSON.stringify(msg))
+          Emitter.emit(EventType.MessageEmitted, {
+            msg,
+          })
+          clearInterval(interval)
+          return
+        }
+        console.log("socket still not open...")
+      }, 300)
+    } else {
+      conn.current.send(JSON.stringify(msg))
+      Emitter.emit(EventType.MessageEmitted, {
+        msg,
+      })
+    }
   }
 
   function emitSetState(roomID: string, val: any) {
+    console.log(roomID, val)
     emitMessage({
       MessageID: generateID(),
       RoomID: roomID,
@@ -211,12 +230,17 @@ export function useSharedState<T>(
     (val: StateType<T>) => {
       setState(val)
 
+      console.log("set state")
+
       if (!ctx) {
         console.error("did not have context for shared state setter")
         return
       }
 
-      ctx.emitSetState(uniqueStateID, val)
+      ctx.emitSetState(
+        uniqueStateID,
+        typeof val === "function" ? (val as Function)(state) : val
+      )
     },
     [state]
   )
