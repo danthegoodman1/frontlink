@@ -3,8 +3,8 @@ export type MessageType =
   | "CallFunction"
   | "Subscribe"
   | "Unsubscribe"
-  | "RoommateConnected"
-  | "RoommateDisconnected"
+  | "RoommateSubscribed"
+  | "RoommateUnsubscribed"
 
 export interface Message {
   /**
