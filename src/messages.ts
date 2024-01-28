@@ -3,6 +3,8 @@ export type MessageType =
   | "CallFunction"
   | "Subscribe"
   | "Unsubscribe"
+  | "RoommateConnected"
+  | "RoommateDisconnected"
 
 export interface Message {
   /**
@@ -53,4 +55,14 @@ export interface StateUpdateMessage extends Message {
 export interface CallFunctionMessage extends Message {
   MessageType: "CallFunction"
   Args: string[]
+}
+
+export interface RoommateConnectedMessage extends Message {
+  MessageType: "RoommateConnected"
+  ClientID: string
+}
+
+export interface RoommateDisconnectedMessage extends Message {
+  MessageType: "RoommateDisconnected"
+  ClientID: string
 }
