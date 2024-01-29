@@ -84,7 +84,7 @@ Because the `WebSocket` API doesn't allow passing in headers, we have to look at
 
 If you know your auth info at connection time (e.g. you are using something like `<SignedIn>` with Clerk, then you can pass a token as part of your WebSocket url: `wss://yourapi.com/ws/<TOKEN>`. This method is greatly preferred, as you probably don't want unbound anonymous clients holding WebSocket connections.
 
-If auth happens after WebSocket connection, you can fire a shared function to delcare yourself (and thus allow your client to send/receive messages on your API):
+If auth happens after WebSocket connection, you can fire a shared function to declare yourself (and thus allow your client to send/receive messages on your API):
 
 ```tsx
 const authMe = useSharedFunction("authMe", (token: string) => {
