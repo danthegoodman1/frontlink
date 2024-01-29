@@ -18,6 +18,8 @@ import {
 } from "./messages"
 import * as EventType from "./events"
 
+import { v4 as uuid } from "uuid"
+
 export type RoomKind = "State" | "Function"
 
 interface FrontlinkState {
@@ -42,6 +44,10 @@ function callFunctionInternalEmitterID(stateName: string): string {
 
 export const Emitter = new EventEmitter()
 const internalEmitter = new EventEmitter()
+
+function randomID(): string {
+  return uuid()
+}
 
 export function FrontlinkProvider(
   props: PropsWithChildren<{
@@ -185,6 +191,7 @@ export function FrontlinkProvider(
     emitMessage({
       RoomID: roomID,
       Value: JSON.stringify(val),
+      MessageID: randomID(),
     } as Omit<StateUpdateMessage, "MessageMS">)
   }
 
@@ -192,6 +199,7 @@ export function FrontlinkProvider(
     emitMessage({
       RoomID: roomID,
       Args: args.map((arg) => JSON.stringify(arg)),
+      MessageID: randomID(),
     } as Omit<CallFunctionMessage, "MessageMS">)
   }
 
@@ -216,6 +224,7 @@ export function FrontlinkProvider(
       MessageType: kind === "State" ? "SubscribeState" : "SubscribeFunction",
       RoomID: roomID,
       Value: initialValue,
+      MessageID: randomID(),
     } as Omit<SubscribeMessage, "MessageMS">)
     connectedRooms.current.add(roomID)
     Emitter.emit(EventType.RoomSubscribed, {
@@ -240,6 +249,7 @@ export function FrontlinkProvider(
         MessageType:
           kind === "State" ? "UnsubscribeState" : "UnsubscribeFunction",
         RoomID: roomID,
+        MessageID: randomID(),
       } as Omit<UnsubscribeMessage, "MessageMS">)
       connectedRooms.current.delete(roomID)
       Emitter.emit(EventType.RoomUnsubscribed, {
