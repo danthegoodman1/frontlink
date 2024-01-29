@@ -192,16 +192,18 @@ export function FrontlinkProvider(
     console.debug(roomID, val)
     emitMessage({
       RoomID: roomID,
-      Value: JSON.stringify(val),
+      Value: val,
       MessageID: randomID(),
+      MessageType: "StateUpdate",
     } as Omit<StateUpdateMessage, "MessageMS">)
   }
 
   function emitCallFunction(roomID: string, ...args: any[]) {
     emitMessage({
       RoomID: roomID,
-      Args: args.map((arg) => JSON.stringify(arg)),
+      Args: args,
       MessageID: randomID(),
+      MessageType: "CallFunction",
     } as Omit<CallFunctionMessage, "MessageMS">)
   }
 
