@@ -13,7 +13,8 @@ export {
   Emitter,
   FrontlinkProvider,
   Messages,
-  RoomKind,
   useSharedFunction,
   useSharedState,
 }
+
+export type { RoomKind }

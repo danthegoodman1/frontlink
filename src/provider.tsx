@@ -1,4 +1,4 @@
-import React, {
+import {
   PropsWithChildren,
   createContext,
   useCallback,
@@ -145,6 +145,8 @@ export function FrontlinkProvider(
     if (conn.current === null || msgDedupe.current === null) {
       return
     }
+
+    msgDedupe.current.add(msg.MessageID)
 
     // Send to socket
     console.debug("emitting", msg, conn.current.readyState)
