@@ -1,6 +1,6 @@
 # Frontlink
 
-React realtime updates with your backend in a few lines of code
+React realtime updates with your backend in a few lines of code. Heavily inspired by the [driftdb](https://driftdb.com) UX.
 
 ## Getting started
 
@@ -67,6 +67,8 @@ export default function SomeSharedComponent() {
 }
 ```
 
+You can find a [minimal example React app here](https://github.com/danthegoodman1/frontlink-example) that includes a simple backend implementation.
+
 ## Uniquely naming shared states and functions
 
 In order to prevent errors and potential undefined behavior of naming collisions, frontlink will NOT let you attach multiple active shared states or functions with the same room name. Frontlink will error in the console, and emit a `RoomCollisionPrevented` event.
@@ -113,6 +115,8 @@ There are only a few critical pieces to building a minimal backend:
 3. Clients emit `SetState` and `CallFunction` messages to the backend. The backend should then relay these to all other connected clients in that room (do not send back to emitting client). Set the `ClientID` and `MessageMS` of the messages.
 4. When clients unsubscribe from a room, remove them from the room-client index. Emit a `RoommateUnsubscribed` ([see schema](/src/messages.ts)) message to all but the new client if presence is relevant.
 5. When clients disconnect, remove them from all room-client indexes
+
+You can find a [minimal backend here](https://github.com/danthegoodman1/frontlink-example) for an example React app with an Express API. This implements simple room subscribe/unsubscribe, and relaying events to clients in the room. That is all you need!
 
 ### Seeding state
 
