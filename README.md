@@ -97,11 +97,11 @@ useEffect(() => {
 }, [])
 
 return token ? (
-  props.children
-) : (
   <FrontlinkProvider api={`wss://yourapi.com/frontlink?k=${token}`}>
     {props.children}
   </FrontlinkProvider>
+) : (
+  props.children
 )
 ```
 
