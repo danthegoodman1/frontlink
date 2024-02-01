@@ -105,7 +105,7 @@ return token ? (
 )
 ```
 
-With this method, children are rendered immediately, then once we have a valid token from Clerk we wrap the entire app in that scope. Any sent messages have a brief buffer period to wait for scenarios like this.
+With this method, children are rendered immediately, then once we have a valid token from Clerk we wrap the entire app in the frontlink provider.
 
 If auth happens after WebSocket connection, you can fire a shared function to declare yourself (and thus allow your client to send/receive messages on your API):
 
