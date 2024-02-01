@@ -79,12 +79,33 @@ A few good tips are:
 
 1. Never use a shared state/function within a component that can have multiple of itself rendered at the same time: If you are listing something, put the shared state at the level above, not in the listed components.
 2. Name things based on their components and functionality: Instead of `useSharedState('count', 0)`, do something like `useSharedState('SpecificButtonOrPageCount', 0)` to prevent collisions.
+3. Use ARN-style room naming. For example `{roomType}::{uniqueID}` where the `uniqueID` is something like a user ID or an organization ID. That way on room join you can split by `::` and check permissions accordingly.
 
 ## Auth
 
 Because the `WebSocket` API doesn't allow passing in headers, we have to look at some other mechanism for auth.
 
-If you know your auth info at connection time (e.g. you are using something like `<SignedIn>` with Clerk, then you can pass a token as part of your WebSocket url: `wss://yourapi.com/ws/<TOKEN>`. This method is greatly preferred, as you probably don't want unbound anonymous clients holding WebSocket connections.
+If you know your auth info at connection time (e.g. you are using something like `<SignedIn>` with Clerk, then you can pass a token as part of your WebSocket url: `wss://yourapi.com/ws/<TOKEN>`. This method is greatly preferred, as you probably don't want unbound anonymous clients holding WebSocket connections. You can do something like this:
+
+```tsx
+const [token, setToken] = useState<string | null>(null)
+
+useEffect(() => {
+  ;(async () => {
+    setToken(await getToken())
+  })()
+}, [])
+
+return token ? (
+  props.children
+) : (
+  <FrontlinkProvider api={`wss://yourapi.com/frontlink?k=${token}`}>
+    {props.children}
+  </FrontlinkProvider>
+)
+```
+
+With this method, children are rendered immediately, then once we have a valid token from Clerk we wrap the entire app in that scope. Any sent messages have a brief buffer period to wait for scenarios like this.
 
 If auth happens after WebSocket connection, you can fire a shared function to declare yourself (and thus allow your client to send/receive messages on your API):
 
@@ -105,6 +126,8 @@ A [comprehensive suite of events](src/events.ts) are emitted for your app to rea
 Messages are emitted to the backend as stringified JSON in the schema found in [`messages.ts`](/src/messages.ts).
 
 Frontlink expects that joining a room will work regardless of auth state or permissions. It's up to you on the backend to determine whether it will be able to send/receive messages to a given room, as it will only ever resubscribe if the component unmounts and remounts.
+
+You should also use a single URL path (like `/frontlink?token={jwt}`) for all connections, rather than being per-user or per-org when possible. Then you can manage scope and permissions to join rooms based on the provided token.
 
 ### Basic flow
 
