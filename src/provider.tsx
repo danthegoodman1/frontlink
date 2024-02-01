@@ -68,7 +68,7 @@ let printDebug = false
 
 function debug(...args: any[]) {
   if (printDebug) {
-    console.debug(args)
+    console.debug(...args)
   }
 }
 
