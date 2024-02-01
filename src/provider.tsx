@@ -61,10 +61,13 @@ interface FrontlinkProviderProps extends PropsWithChildren {
    * Useful for re-creating auth tokens during reconnects, or shortly delaying connect until auth token generated.
    */
   onConnect?: () => Promise<URLSearchParams>
+  debugLog?: boolean
 }
 
+let printDebug = false
+
 function debug(...args: any[]) {
-  if (!!(window as any).FROINTLINK_DEBUG) {
+  if (printDebug) {
     console.debug(args)
   }
 }
@@ -73,6 +76,8 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Set<string> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
+
+  printDebug = !!props.debugLog
 
   async function connectToWS() {
     const url = new URL(props.api)
