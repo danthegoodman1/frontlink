@@ -38,7 +38,7 @@ export interface Message {
   /**
    * If a `MessageType = 'CallFunction', the parameters of the called function
    */
-  Args?: string[]
+  Args?: any[]
 }
 
 export interface SubscribeMessage extends Message {
@@ -56,7 +56,7 @@ export interface StateUpdateMessage extends Message {
 
 export interface CallFunctionMessage extends Message {
   MessageType: "CallFunction"
-  Args: string[]
+  Args: any[]
 }
 
 export interface RoommateSubscribedMessage extends Message {

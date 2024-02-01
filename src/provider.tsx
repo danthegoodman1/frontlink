@@ -27,7 +27,7 @@ interface FrontlinkState {
   subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any): void
   unsubFromRoom(roomID: string, kind: RoomKind): void
   emitSetState(stateID: string, value: any): void
-  emitCallFunction(functionID: string, value: any[]): void
+  emitCallFunction(functionID: string, args: any[]): void
   /**
    * Number of dependent states or functions on a room
    */
@@ -221,7 +221,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     } as Omit<StateUpdateMessage, "MessageMS">)
   }
 
-  function emitCallFunction(roomID: string, ...args: any[]) {
+  function emitCallFunction(roomID: string, args: any[]) {
     emitMessage({
       RoomID: roomID,
       Args: args,
@@ -368,8 +368,7 @@ export function useSharedFunction<T extends any[]>(
     ctx.emitCallFunction(uniqueFunctionID, args)
   }
 
-  function callerWrapper(stringArgs: string[]) {
-    const args: any = stringArgs.map((arg) => JSON.parse(arg))
+  function callerWrapper(args: any) {
     debug("calling function", uniqueFunctionID, "with args", args)
     func(...args)
   }
