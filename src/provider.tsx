@@ -63,6 +63,12 @@ interface FrontlinkProviderProps extends PropsWithChildren {
   onConnect?: () => Promise<URLSearchParams>
 }
 
+function debug(...args: any) {
+  if (((window as any).FROINTLINK_DEBUG = true)) {
+    console.debug(args)
+  }
+}
+
 export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Set<string> | null>(null)
@@ -75,7 +81,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       newParams.forEach((val, key) => {
         url.searchParams.append(key, val)
       })
-      console.debug("using final url", url.toString())
+      debug("using final url", url.toString())
     }
     conn.current = new WebSocket(url)
     conn.current.onmessage = (event) => {
@@ -90,7 +96,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         return
       }
 
-      console.debug("msg receieved", msg)
+      debug("msg receieved", msg)
 
       if (msgDedupe.current!.has(msg.MessageID!)) {
         console.warn("duplicate message detected, dropping")
@@ -164,10 +170,10 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     msgDedupe.current.add(msg.MessageID)
 
     // Send to socket
-    console.debug("emitting", msg, conn.current.readyState)
+    debug("emitting", msg, conn.current.readyState)
     if (conn.current?.readyState !== conn.current.OPEN) {
       // Buffer it up
-      console.debug("socket not open, spinning")
+      debug("socket not open, spinning")
       const started = new Date().getTime()
       const interval = setInterval(() => {
         if (new Date().getTime() > started + (props.maxBufferMS ?? 10_000)) {
@@ -181,7 +187,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         }
 
         if (conn.current?.readyState === conn.current?.OPEN) {
-          console.debug("going")
+          debug("going")
           conn.current?.send(JSON.stringify(msg))
           Emitter.emit(EventType.MessageEmitted, {
             msg,
@@ -190,7 +196,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
           return
         }
 
-        console.debug("socket still not open...")
+        debug("socket still not open...")
       }, 300)
     } else {
       conn.current.send(JSON.stringify(msg))
@@ -201,7 +207,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   }
 
   function emitSetState(roomID: string, val: any) {
-    console.debug(roomID, val)
+    debug(roomID, val)
     emitMessage({
       RoomID: roomID,
       Value: val,
@@ -359,7 +365,7 @@ export function useSharedFunction<T extends any[]>(
 
   function callerWrapper(stringArgs: string[]) {
     const args: any = stringArgs.map((arg) => JSON.parse(arg))
-    console.debug("calling function", uniqueFunctionID, "with args", args)
+    debug("calling function", uniqueFunctionID, "with args", args)
     func(...args)
   }
 
