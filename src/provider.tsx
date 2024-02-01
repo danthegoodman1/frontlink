@@ -23,7 +23,7 @@ import { v4 as uuid } from "uuid"
 export type RoomKind = "State" | "Function"
 
 interface FrontlinkState {
-  conn: WebSocket
+  conn: WebSocket | null
   subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any): void
   unsubFromRoom(roomID: string, kind: RoomKind): void
   emitSetState(stateID: string, value: any): void
@@ -49,24 +49,35 @@ function randomID(): string {
   return uuid()
 }
 
-export function FrontlinkProvider(
-  props: PropsWithChildren<{
-    api: string
-    opts?: {
-      /**
-       * The maximum number of milliseconds that messages will be buffered locally
-       * if the socket is not connected. Default 10_000
-       */
-      maxBufferMS?: number
-    }
-  }>
-) {
+interface FrontlinkProviderProps extends PropsWithChildren {
+  api: string
+  /**
+   * The maximum number of milliseconds that messages will be buffered locally
+   * if the socket is not connected. Default 10_000
+   */
+  maxBufferMS?: number
+  /**
+   * When creating a new websocket connection, this will append the returned search params.
+   * Useful for re-creating auth tokens during reconnects, or shortly delaying connect until auth token generated.
+   */
+  onConnect?: () => Promise<URLSearchParams>
+}
+
+export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Set<string> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
 
-  if (conn.current === null) {
-    conn.current = new WebSocket(props.api)
+  async function connectToWS() {
+    const url = new URL(props.api)
+    if (props.onConnect) {
+      const newParams = await props.onConnect()
+      newParams.forEach((val, key) => {
+        url.searchParams.append(key, val)
+      })
+      console.debug("using final url", url.toString())
+    }
+    conn.current = new WebSocket(url)
     conn.current.onmessage = (event) => {
       let msg: Message
       try {
@@ -133,6 +144,10 @@ export function FrontlinkProvider(
     }
   }
 
+  if (conn.current === null) {
+    connectToWS()
+  }
+
   if (connectedRooms.current === null) {
     connectedRooms.current = new Set<string>()
   }
@@ -150,15 +165,12 @@ export function FrontlinkProvider(
 
     // Send to socket
     console.debug("emitting", msg, conn.current.readyState)
-    if (conn.current.readyState !== conn.current.OPEN) {
+    if (conn.current?.readyState !== conn.current.OPEN) {
       // Buffer it up
       console.debug("socket not open, spinning")
       const started = new Date().getTime()
       const interval = setInterval(() => {
-        if (
-          new Date().getTime() >
-          started + (props.opts?.maxBufferMS ?? 10_000)
-        ) {
+        if (new Date().getTime() > started + (props.maxBufferMS ?? 10_000)) {
           // Drop them
           clearInterval(interval)
           console.error(
