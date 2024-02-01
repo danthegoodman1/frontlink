@@ -63,8 +63,8 @@ interface FrontlinkProviderProps extends PropsWithChildren {
   onConnect?: () => Promise<URLSearchParams>
 }
 
-function debug(...args: any) {
-  if (((window as any).FROINTLINK_DEBUG = true)) {
+function debug(...args: any[]) {
+  if (!!(window as any).FROINTLINK_DEBUG) {
     console.debug(args)
   }
 }
