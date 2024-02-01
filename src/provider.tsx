@@ -27,7 +27,7 @@ interface FrontlinkState {
   subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any): void
   unsubFromRoom(roomID: string, kind: RoomKind): void
   emitSetState(stateID: string, value: any): void
-  emitCallFunction(functionID: string, value: string[]): void
+  emitCallFunction(functionID: string, value: any[]): void
   /**
    * Number of dependent states or functions on a room
    */
