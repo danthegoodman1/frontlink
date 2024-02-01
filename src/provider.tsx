@@ -175,7 +175,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     msgDedupe.current.add(msg.MessageID)
 
     // Send to socket
-    debug("emitting", msg, conn.current.readyState)
+    debug("emitting", msg, JSON.stringify(msg), conn.current?.readyState)
     if (conn.current?.readyState !== conn.current.OPEN) {
       // Buffer it up
       debug("socket not open, spinning")
