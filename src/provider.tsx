@@ -63,7 +63,7 @@ interface FrontlinkProviderProps extends PropsWithChildren {
   preConnect?: () => Promise<URLSearchParams>
   debugLog?: boolean
   /**
-   * Default 5000
+   * Default 5000. Set to 0 to disable.
    */
   pingIntervalMS?: number
   /**
@@ -106,11 +106,14 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
           clearTimeout(pingTimeout.current)
         }
         conn.current?.send("__pong__")
-        pingTimeout.current = setTimeout(() => {
-          // Kill the connection, will attempt reconnect
-          conn.current?.close()
-          Emitter.emit(EventType.PingIntervalTimeout, null) // nothing in the payload
-        }, props.pingIntervalMS ?? 5000)
+        if ((props.pingIntervalMS ?? 0) > 0) {
+          pingTimeout.current = setTimeout(() => {
+            // Kill the connection, will attempt reconnect
+            debug("ping timeout!")
+            conn.current?.close()
+            Emitter.emit(EventType.PingIntervalTimeout, null) // nothing in the payload
+          }, props.pingIntervalMS ?? 5000)
+        }
         return
       }
 
@@ -174,6 +177,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 
       // Reconnect
       setTimeout(() => {
+        debug("reconnecting after close")
         connectToWS()
       }, props.reconnectDelayMS ?? 3000)
     }
@@ -184,6 +188,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 
       // Reconnect
       setTimeout(() => {
+        debug("reconnecting after error")
         connectToWS()
       }, props.reconnectDelayMS ?? 3000)
     }
