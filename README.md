@@ -128,6 +128,12 @@ There are only a few critical pieces to building a minimal backend:
 
 You can find a [minimal backend here](https://github.com/danthegoodman1/frontlink-example) for an example React app with an Express API. This implements simple room subscribe/unsubscribe, and relaying events to clients in the room. That is all you need!
 
+### Joining Rooms
+
+Clients will emit one or more `SubscribeState` or `SubscribeFunction` messages when joining a room. You should be able to deduplicate joins (ignore if they are already joined).
+
+When clients disconnect, they should be removed from all rooms.
+
 ### Seeding state
 
 When a `useSharedState` or `useSharedFunction` is mounted, they will emit a `SubscribeState` and `SubscribeFunction` event respectively to the backend. For the `SubscribeState` event, the payload includes the `Value` property, which is the value of `JSON.stringify(initialValue)`. You can use this to seed the state for the room, and for clients that subsequently connect.

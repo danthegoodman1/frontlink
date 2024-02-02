@@ -31,7 +31,7 @@ interface FrontlinkState {
   /**
    * Number of dependent states or functions on a room
    */
-  connectedRooms: Set<string>
+  connectedRooms: Map<string, RoomKind>
 }
 
 function stateUpdateInternalEmitterID(stateName: string): string {
@@ -82,7 +82,7 @@ function debug(...args: any[]) {
 
 export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
-  const connectedRooms = useRef<Set<string> | null>(null)
+  const connectedRooms = useRef<Map<string, RoomKind> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
 
   printDebug = !!props.debugLog
@@ -155,6 +155,19 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 
     conn.current.onopen = (event) => {
       debug("websocket opened", event)
+
+      // Emit sub to any room that we know about
+      connectedRooms.current?.forEach((roomKind, roomID) => {
+        debug("subscribing to room on open")
+        emitMessage({
+          MessageType:
+            roomKind === "State" ? "SubscribeState" : "SubscribeFunction",
+          RoomID: roomID,
+          Value: undefined, // we don't know
+          MessageID: randomID(),
+        } as Omit<SubscribeMessage, "MessageMS">)
+      })
+
       Emitter.emit(EventType.SocketOpened, {
         event,
       })
@@ -185,7 +198,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   }
 
   if (connectedRooms.current === null) {
-    connectedRooms.current = new Set<string>()
+    connectedRooms.current = new Map<string, RoomKind>()
   }
 
   if (msgDedupe.current === null) {
@@ -272,13 +285,17 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       return
     }
 
-    emitMessage({
-      MessageType: kind === "State" ? "SubscribeState" : "SubscribeFunction",
-      RoomID: roomID,
-      Value: initialValue,
-      MessageID: randomID(),
-    } as Omit<SubscribeMessage, "MessageMS">)
-    connectedRooms.current.add(roomID)
+    connectedRooms.current.set(roomID, kind)
+    if (conn.current?.readyState === conn.current.OPEN) {
+      // Send if connected, otherwise open will handle
+      debug("subscribing to room on demand")
+      emitMessage({
+        MessageType: kind === "State" ? "SubscribeState" : "SubscribeFunction",
+        RoomID: roomID,
+        Value: initialValue,
+        MessageID: randomID(),
+      } as Omit<SubscribeMessage, "MessageMS">)
+    }
     Emitter.emit(EventType.RoomSubscribed, {
       roomID,
     })
@@ -297,13 +314,17 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       )
       return
     } else {
-      emitMessage({
-        MessageType:
-          kind === "State" ? "UnsubscribeState" : "UnsubscribeFunction",
-        RoomID: roomID,
-        MessageID: randomID(),
-      } as Omit<UnsubscribeMessage, "MessageMS">)
       connectedRooms.current.delete(roomID)
+      if (conn.current?.readyState === conn.current.OPEN) {
+        // Send if connected, otherwise open will handle
+        debug("unsubscribing from room on demand")
+        emitMessage({
+          MessageType:
+            kind === "State" ? "UnsubscribeState" : "UnsubscribeFunction",
+          RoomID: roomID,
+          MessageID: randomID(),
+        } as Omit<UnsubscribeMessage, "MessageMS">)
+      }
       Emitter.emit(EventType.RoomUnsubscribed, {
         roomID,
       })
