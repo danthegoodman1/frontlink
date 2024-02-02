@@ -63,9 +63,13 @@ interface FrontlinkProviderProps extends PropsWithChildren {
   preConnect?: () => Promise<URLSearchParams>
   debugLog?: boolean
   /**
-   * Default 5 seconds
+   * Default 5000
    */
   pingIntervalMS?: number
+  /**
+   * Default 3000
+   */
+  reconnectDelayMS?: number
 }
 
 let printDebug = false
@@ -169,7 +173,9 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       })
 
       // Reconnect
-      connectToWS()
+      setTimeout(() => {
+        connectToWS()
+      }, props.reconnectDelayMS ?? 3000)
     }
     conn.current.onerror = (event) => {
       Emitter.emit(EventType.SocketError, {
@@ -177,7 +183,9 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       })
 
       // Reconnect
-      connectToWS()
+      setTimeout(() => {
+        connectToWS()
+      }, props.reconnectDelayMS ?? 3000)
     }
   }
 
