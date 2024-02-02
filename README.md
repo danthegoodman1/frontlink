@@ -83,39 +83,26 @@ A few good tips are:
 
 ## Auth
 
-Because the `WebSocket` API doesn't allow passing in headers, we have to look at some other mechanism for auth.
+BBecause the `WebSocket` API doesn't allow passing in headers, we have to look at some other mechanism for auth.
 
-If you know your auth info at connection time (e.g. you are using something like `<SignedIn>` with Clerk, then you can pass a token as part of your WebSocket url: `wss://yourapi.com/ws/<TOKEN>`. This method is greatly preferred, as you probably don't want unbound anonymous clients holding WebSocket connections. You can do something like this:
+If you know your auth info at connection time (e.g. you are using something like `<SignedIn>` with Clerk) then you can pass a token as part of your WebSocket URL: `wss://yourapi.com/ws?token=<TOKEN>`. This method is greatly preferred, as you probably don't want unbound anonymous clients holding WebSocket connections.
+
+Just for this purpose there is also a `preConnect` prop that returns a `Promise<URLSearchParams>`. This appends the search params to the provided URL can be used for both waiting on an initial token, and for getting a new token during reconnects.
 
 ```tsx
-const [token, setToken] = useState<string | null>(null)
-
-useEffect(() => {
-  ;(async () => {
-    setToken(await getToken())
-  })()
-}, [])
-
-return token ? (
-  <FrontlinkProvider api={`wss://yourapi.com/frontlink?k=${token}`}>
+return (
+  <FrontlinkProvider
+    api={`...`}
+    preConnect={async () => {
+      return new URLSearchParams({
+        token: (await getToken()) ?? "<no token>",
+      })
+    }}
+  >
     {props.children}
   </FrontlinkProvider>
-) : (
-  props.children
 )
 ```
-
-With this method, children are rendered immediately, then once we have a valid token from Clerk we wrap the entire app in the frontlink provider.
-
-If auth happens after WebSocket connection, you can fire a shared function to declare yourself (and thus allow your client to send/receive messages on your API):
-
-```tsx
-const authMe = useSharedFunction("authMe", (token: string) => {
-  // do nothing, just for server
-})
-```
-
-You can then emit your token. If you use this method, drop messages (and don't send) to unauthed clients rather than dropping connections or not allowing them in rooms.
 
 ## Listening to events
 
