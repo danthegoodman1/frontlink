@@ -100,23 +100,6 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     }
     conn.current = new WebSocket(url)
     conn.current.onmessage = (event) => {
-      if (event.data === "__ping__") {
-        // Check if ping
-        if (pingTimeout.current) {
-          clearTimeout(pingTimeout.current)
-        }
-        conn.current?.send("__pong__")
-        if ((props.pingIntervalMS ?? 0) > 0) {
-          pingTimeout.current = setTimeout(() => {
-            // Kill the connection, will attempt reconnect
-            debug("ping timeout!")
-            conn.current?.close()
-            Emitter.emit(EventType.PingIntervalTimeout, null) // nothing in the payload
-          }, props.pingIntervalMS ?? 5000)
-        }
-        return
-      }
-
       let msg: Message
       try {
         msg = JSON.parse(event.data)
@@ -170,6 +153,14 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
           break
       }
     }
+
+    conn.current.onopen = (event) => {
+      debug("websocket opened", event)
+      Emitter.emit(EventType.SocketOpened, {
+        event,
+      })
+    }
+
     conn.current.onclose = (event) => {
       debug("websocket closed", event)
       Emitter.emit(EventType.SocketClosed, {

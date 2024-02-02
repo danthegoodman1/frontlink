@@ -11,6 +11,7 @@ export const MessageReceived = "MessageReceived"
  */
 export const DeserializationError = "DeserializationError"
 export const SocketClosed = "SocketClosed"
+export const SocketOpened = "SocketOpened"
 export const SocketError = "SocketError"
 /**
  * When a state or function tries to subscribe to a room with the same name
