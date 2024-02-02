@@ -84,7 +84,6 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Set<string> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
-  const pingTimeout = useRef<number | null>(null)
 
   printDebug = !!props.debugLog
 
