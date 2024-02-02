@@ -62,6 +62,10 @@ interface FrontlinkProviderProps extends PropsWithChildren {
    */
   preConnect?: () => Promise<URLSearchParams>
   debugLog?: boolean
+  /**
+   * Default 5 seconds
+   */
+  pingIntervalMS?: number
 }
 
 let printDebug = false
@@ -76,10 +80,12 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Set<string> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
+  const pingTimeout = useRef<number | null>(null)
 
   printDebug = !!props.debugLog
 
   async function connectToWS() {
+    // Kill the ping interval if it exists
     const url = new URL(props.api)
     if (props.preConnect) {
       const newParams = await props.preConnect()
@@ -90,6 +96,20 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     }
     conn.current = new WebSocket(url)
     conn.current.onmessage = (event) => {
+      if (event.data === "__ping__") {
+        // Check if ping
+        if (pingTimeout.current) {
+          clearTimeout(pingTimeout.current)
+        }
+        conn.current?.send("__pong__")
+        pingTimeout.current = setTimeout(() => {
+          // Kill the connection, will attempt reconnect
+          conn.current?.close()
+          Emitter.emit(EventType.PingIntervalTimeout, null) // nothing in the payload
+        }, props.pingIntervalMS ?? 5000)
+        return
+      }
+
       let msg: Message
       try {
         msg = JSON.parse(event.data)
@@ -147,11 +167,17 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       Emitter.emit(EventType.SocketClosed, {
         event,
       })
+
+      // Reconnect
+      connectToWS()
     }
     conn.current.onerror = (event) => {
       Emitter.emit(EventType.SocketError, {
         event,
       })
+
+      // Reconnect
+      connectToWS()
     }
   }
 

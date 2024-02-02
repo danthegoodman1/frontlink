@@ -21,6 +21,10 @@ export const RoomUnsubscribed = "RoomUnsubscribed"
 export const RoommateSubscribed = "RoommateSubscribed"
 export const RoommateUnsubscribed = "RoommateUnsubscribed"
 export const DuplicateMessageReceived = "DuplicateMessageReceived"
+/**
+ * When we don't get a ping from the server within the timeout
+ */
+export const PingIntervalTimeout = "PingIntervalTimeout"
 
 export interface EventPayload {
   /**
