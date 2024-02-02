@@ -60,7 +60,7 @@ interface FrontlinkProviderProps extends PropsWithChildren {
    * When creating a new websocket connection, this will append the returned search params.
    * Useful for re-creating auth tokens during reconnects, or shortly delaying connect until auth token generated.
    */
-  onConnect?: () => Promise<URLSearchParams>
+  preConnect?: () => Promise<URLSearchParams>
   debugLog?: boolean
 }
 
@@ -81,8 +81,8 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 
   async function connectToWS() {
     const url = new URL(props.api)
-    if (props.onConnect) {
-      const newParams = await props.onConnect()
+    if (props.preConnect) {
+      const newParams = await props.preConnect()
       newParams.forEach((val, key) => {
         url.searchParams.append(key, val)
       })
