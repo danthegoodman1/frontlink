@@ -171,6 +171,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       }
     }
     conn.current.onclose = (event) => {
+      debug("websocket closed", event)
       Emitter.emit(EventType.SocketClosed, {
         event,
       })
@@ -182,15 +183,10 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       }, props.reconnectDelayMS ?? 3000)
     }
     conn.current.onerror = (event) => {
+      debug("websocket error", event)
       Emitter.emit(EventType.SocketError, {
         event,
       })
-
-      // Reconnect
-      setTimeout(() => {
-        debug("reconnecting after error")
-        connectToWS()
-      }, props.reconnectDelayMS ?? 3000)
     }
   }
 
