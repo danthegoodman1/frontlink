@@ -70,6 +70,10 @@ interface FrontlinkProviderProps extends PropsWithChildren {
    * Default 3000
    */
   reconnectDelayMS?: number
+  /**
+   * How often the dedupe set should be truncated. Default 30_000
+   */
+  dedupeTruncateIntervalMS?: number
 }
 
 let printDebug = false
@@ -84,6 +88,11 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
   const connectedRooms = useRef<Map<string, RoomKind> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
+
+  setInterval(() => {
+    debug("truncating dedupe set")
+    msgDedupe.current = new Set<string>()
+  }, props.dedupeTruncateIntervalMS ?? 30_000)
 
   printDebug = !!props.debugLog
 
