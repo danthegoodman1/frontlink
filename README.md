@@ -32,12 +32,9 @@ import { useSharedState } from "frontlink"
 export default function SomeSharedComponent() {
   const { user } = getMyUser()
 
-  const [roomName, setRoomName] = useSharedState(
-    "someRoomName",
-    "my local value"
-  )
+  const [value, setValue] = useSharedState("someRoomName", "my local value")
 
-  return <p>My room is {roomName}</p>
+  return <p>My room is {value}</p>
 }
 ```
 
@@ -49,10 +46,7 @@ import { useSharedState, useSharedFunction } from "frontlink"
 export default function SomeSharedComponent() {
   const { user } = getMyUser()
 
-  const [roomName, setRoomName] = useSharedState(
-    "someRoomName",
-    "my local value"
-  )
+  const [value, setValue] = useSharedState("someRoomName", "my local value")
 
   const sharedFunc = useSharedFunction("sharedFunc", async (someArg) => {
     console.log("I did something cool (hey... who triggered this?):", someArg)
@@ -60,7 +54,7 @@ export default function SomeSharedComponent() {
 
   return (
     <>
-      <p>My room is {roomName}</p>
+      <p>My room is {value}</p>
       <button
         onClick={() => {
           sharedFunc()
