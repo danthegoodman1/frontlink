@@ -108,6 +108,14 @@ return (
 
 A [comprehensive suite of events](src/events.ts) are emitted for your app to react in response to.
 
+```tsx
+import { Emitter, EventTypes, Messages } from "frontlink"
+
+Emitter.on(EventTypes.SocketOpened, (event: Event) => {
+  // connected to the socket
+})
+```
+
 ## Building a backend
 
 Messages are emitted to the backend as stringified JSON in the schema found in [`messages.ts`](/src/messages.ts).
