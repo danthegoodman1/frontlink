@@ -390,6 +390,11 @@ export function useSharedState<T>(
     },
     [state]
   ) as SetterFunction<T>
+  /**
+   * A special version of the function that executes without updating peers.
+   * Useful if you need to update state based on something local
+   * that doesn't make sense for roommates.
+   */
   setter.noEmit = setState
 
   useEffect(() => {
@@ -429,7 +434,7 @@ export function useSharedFunction<T extends any[]>(
   }
   /**
    * A special version of the function that executes without updating peers.
-   * Useful if you need to use the function to poll
+   * Useful if you need to use the function to poll and revalidate from peer updates.
    */
   caller.noEmit = func
 

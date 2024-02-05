@@ -30,8 +30,6 @@ Now we can use shared state within components!
 import { useSharedState } from "frontlink"
 
 export default function SomeSharedComponent() {
-  const { user } = getMyUser()
-
   const [value, setValue] = useSharedState("someRoomName", "my local value")
 
   return <p>My room is {value}</p>
@@ -57,7 +55,7 @@ export default function SomeSharedComponent() {
       <p>My room is {value}</p>
       <button
         onClick={() => {
-          sharedFunc()
+          sharedFunc() // this gets called on all clients
         }}
       >
         Click me to do something cool
@@ -71,9 +69,9 @@ You can find a [minimal example React app here](https://github.com/danthegoodman
 
 ### `.noEmit()`
 
-Sometimes you don't want to have everyone else call a function when you do, like if you need to use the same function for polling a resource as you would for revalidating.
+Sometimes you don't want to have everyone else call a function when you do, like if you need to use the same function for polling a resource as you would for revalidating, or you need to update state based on something that only applies to the local client.
 
-Every shared function has a `.noEmit()` version of itself that allows you to execute the function without emitting it to roommates:
+Every shared function and state setter have a `.noEmit()` version of itself that allows you to execute the function without emitting it to roommates:
 
 ```tsx
 import { useSharedState, useSharedFunction } from "frontlink"
@@ -96,7 +94,7 @@ export default function SomeSharedComponent() {
       </button>
       <button
         onClick={() => {
-          setValue.noEmit("a new local value")
+          setValue.noEmit("a new local value") // does not emit over websocket
         }}
       >
         Update my local value
