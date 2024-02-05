@@ -359,7 +359,11 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 const Ctx = createContext<FrontlinkState | null>(null)
 
 type StateType<T> = T | ((v: T) => T)
-type SetterFunction<T> = (value: T | StateType<T>) => void
+type SetterFunction<T> = {
+  (value: T | StateType<T>): void
+
+  noEmit(value: T | StateType<T>): void
+}
 
 export function useSharedState<T>(
   uniqueStateID: string,
@@ -385,7 +389,8 @@ export function useSharedState<T>(
       )
     },
     [state]
-  )
+  ) as SetterFunction<T>
+  setter.noEmit = setState
 
   useEffect(() => {
     if (!ctx) {

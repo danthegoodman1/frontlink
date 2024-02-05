@@ -69,6 +69,43 @@ export default function SomeSharedComponent() {
 
 You can find a [minimal example React app here](https://github.com/danthegoodman1/frontlink-example) that includes a simple backend implementation.
 
+### `.noEmit()`
+
+Sometimes you don't want to have everyone else call a function when you do, like if you need to use the same function for polling a resource as you would for revalidating.
+
+Every shared function has a `.noEmit()` version of itself that allows you to execute the function without emitting it to roommates:
+
+```tsx
+import { useSharedState, useSharedFunction } from "frontlink"
+
+export default function SomeSharedComponent() {
+  const [value, setValue] = useSharedState("someRoomName", "my local value")
+
+  const sharedFunc = useSharedFunction("sharedFunc", async (someArg) => {
+    console.log("I did something cool (hey... who triggered this?):", someArg)
+  })
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          sharedFunc.noEmit() // does not emit over websocket
+        }}
+      >
+        Click me to do something cool (by myself)
+      </button>
+      <button
+        onClick={() => {
+          setValue.noEmit("a new local value")
+        }}
+      >
+        Update my local value
+      </button>
+    </>
+  )
+}
+```
+
 ## Uniquely naming shared states and functions
 
 In order to prevent errors and potential undefined behavior of naming collisions, frontlink will NOT let you attach multiple active shared states or functions with the same room name. Frontlink will error in the console, and emit a `RoomCollisionPrevented` event.
