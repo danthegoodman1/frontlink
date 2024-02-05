@@ -422,6 +422,11 @@ export function useSharedFunction<T extends any[]>(
 
     ctx.emitCallFunction(uniqueFunctionID, args)
   }
+  /**
+   * A special version of the function that executes without updating peers.
+   * Useful if you need to use the function to poll
+   */
+  caller.noEmit = func
 
   function callerWrapper(args: any) {
     debug("calling function", uniqueFunctionID, "with args", args)
