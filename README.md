@@ -153,6 +153,8 @@ Emitter.on(EventTypes.SocketOpened, (event: Event) => {
 
 ## Building a backend
 
+You can find a [minimal backend here](https://github.com/danthegoodman1/frontlink-example) for an example React app with an Express API. This implements simple room subscribe/unsubscribe, and relaying events to clients in the room. That is all you need!
+
 Messages are emitted to the backend as stringified JSON in the schema found in [`messages.ts`](/src/messages.ts).
 
 Frontlink expects that joining a room will work regardless of auth state or permissions. It's up to you on the backend to determine whether it will be able to send/receive messages to a given room, as it will only ever resubscribe if the component unmounts and remounts.
@@ -168,8 +170,6 @@ There are only a few critical pieces to building a minimal backend:
 3. Clients emit `SetState` and `CallFunction` messages to the backend. The backend should then relay these to all other connected clients in that room (do not send back to emitting client). Set the `ClientID` and `MessageMS` of the messages.
 4. When clients unsubscribe from a room, remove them from the room-client index. Emit a `RoommateUnsubscribed` ([see schema](/src/messages.ts)) message to all but the new client if presence is relevant.
 5. When clients disconnect, remove them from all room-client indexes
-
-You can find a [minimal backend here](https://github.com/danthegoodman1/frontlink-example) for an example React app with an Express API. This implements simple room subscribe/unsubscribe, and relaying events to clients in the room. That is all you need!
 
 ### Joining Rooms
 
