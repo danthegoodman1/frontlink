@@ -1,6 +1,6 @@
 # Frontlink
 
-React realtime updates with your backend in a few lines of code. Heavily inspired by the [driftdb](https://driftdb.com) DX.
+React realtime updates through your backend in a few lines of code. Heavily inspired by the [driftdb](https://driftdb.com) DX.
 
 You can also read the [launch blog post](https://www.aspiring.dev/frontlink-react-realtime-collaboration-and-updates-with-your-backend/)
 
