@@ -146,9 +146,9 @@ return (
 A [comprehensive suite of events](src/events.ts) are emitted for your app to react in response to.
 
 ```tsx
-import { Emitter, EventTypes, Messages } from "frontlink"
+import { Emitter, Events, Messages } from "frontlink"
 
-Emitter.on(EventTypes.SocketOpened, (event: Event) => {
+Emitter.on(Events.SocketOpened, (event: Event) => {
   // connected to the socket
 })
 ```
@@ -210,17 +210,17 @@ When a client subscribes to a room, you can immediately serve it a `SetState` ev
 Use the `Emitter` import to listen for `RoommateSubscribe` and `RoommateUnsubscribe`:
 
 ```tsx
-import { Emitter, EventTypes, Messages } from "frontlink"
+import { Emitter, Events, Messages } from "frontlink"
 
 Emitter.on(
-  EventTypes.RoommateSubscribe,
+  Events.RoommateSubscribe,
   (msg: Messages.RoommateSubscribedMessage) => {
     // Present
   }
 )
 
 Emitter.on(
-  EventTypes.RoommateUnsubscribe,
+  Events.RoommateUnsubscribe,
   (msg: Messages.RoommateUnsubscribedMessage) => {
     // Removed
   }
