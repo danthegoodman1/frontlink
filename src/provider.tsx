@@ -129,6 +129,10 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         return
       }
 
+      Emitter.emit(EventType.MessageReceived, {
+        msg,
+      })
+
       switch (msg.MessageType) {
         case "StateUpdate":
           internalEmitter.emit(
