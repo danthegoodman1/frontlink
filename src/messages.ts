@@ -30,10 +30,9 @@ export interface Message {
   RoomID: string
 
   /**
-   * If a `MessageType = 'StateUpdate'`, what that value is,
-   * with `JSON.stringify()` called on it
+   * If a `MessageType = 'StateUpdate'`, represents a serizable JSON value
    */
-  Value?: string
+  Value?: any
 
   /**
    * If a `MessageType = 'CallFunction', the parameters of the called function
