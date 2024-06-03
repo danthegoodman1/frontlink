@@ -17,7 +17,7 @@ export interface Message {
   MessageType: MessageType
 
   /**
-   * Added by the server (so all clients have a timestamp to "agree" on.
+   * NOT IMPLEMENTED - Added by the server (so all clients have a timestamp to "agree" on.
    * This means that a client with a wonky clock will only impact itself,
    * not all other clients!
    */
