@@ -8,7 +8,7 @@ You can also read the [launch blog post](https://www.aspiring.dev/frontlink-reac
 
 ### Quick Demo
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/1oHSYzt9kL4?si=Fx5BE9BopiMqG4WI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![YouTube Overview](https://img.youtube.com/vi/1oHSYzt9kL4/0.jpg)](https://www.youtube.com/watch?v=1oHSYzt9kL4)
 
 ### Self-guided
 
