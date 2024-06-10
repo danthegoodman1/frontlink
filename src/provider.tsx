@@ -89,6 +89,15 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const connectedRooms = useRef<Map<string, RoomKind> | null>(null)
   const msgDedupe = useRef<Set<string> | null>(null)
 
+  // Close connection on unmount
+  useEffect(() => {
+    return () => {
+      if (conn.current !== null) {
+        conn.current.close()
+      }
+    }
+  }, [])
+
   setInterval(() => {
     debug("truncating dedupe set")
     msgDedupe.current = new Set<string>()
