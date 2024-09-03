@@ -469,7 +469,7 @@ export function useSharedFunction<T extends any[]>(
       ctx.unsubFromRoom(uniqueFunctionID, "Function")
       internalEmitter.removeListener(internalEmitterID, callerWrapper)
     }
-  }, [ctx])
+  }, [ctx, uniqueFunctionID])
 
   return caller
 }
