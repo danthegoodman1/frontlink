@@ -416,6 +416,11 @@ export function useSharedState<T>(
       return
     }
 
+    if (uniqueStateID === null || uniqueStateID === undefined) {
+      console.warn("no provided unique state id, ignoring")
+      return
+    }
+
     ctx.subscribeToRoom(uniqueStateID, "State", initialValue)
     internalEmitter.on(internalEmitterID, setState)
 
@@ -459,6 +464,11 @@ export function useSharedFunction<T extends any[]>(
   useEffect(() => {
     if (!ctx) {
       console.error("did not have context for shared function")
+      return
+    }
+
+    if (uniqueFunctionID === null || uniqueFunctionID === undefined) {
+      console.warn("no provided unique function id, ignoring")
       return
     }
 
