@@ -118,11 +118,21 @@ In order to prevent errors and potential undefined behavior of naming collisions
 
 You can still break this system if you're not careful: For example if you name state the same on different pages that are not supposed to be shared. It's very important to give unique room IDs to all shared states and functions. Clients will ignore updates from the opposite type however (they are aware what kind of share they have), so in theory you can share a name between a function and a state (but maybe don't anyway).
 
+If you pass `undefined` or `null` as the state/function ID, it will abort connecting. You can then later pass a string to connect.
+
+```tsx
+const [userID, setUserID] = useState<string | undefined>()
+const [sharedState, setSharedState] = useSharedState(
+  userID ? `room::${userID}` : undefined
+)
+```
+
 A few good tips are:
 
 1. Never use a shared state/function within a component that can have multiple of itself rendered at the same time: If you are listing something, put the shared state at the level above, not in the listed components.
 2. Name things based on their components and functionality: Instead of `useSharedState('count', 0)`, do something like `useSharedState('SpecificButtonOrPageCount', 0)` to prevent collisions.
 3. Use ARN-style room naming. For example `{roomType}::{uniqueID}` where the `uniqueID` is something like a user ID or an organization ID. That way on room join you can split by `::` and check permissions accordingly.
+4. Use `null` or `undefined` when you need to load into the state/function room after some other client-side initialization has occurred (like loading a user ID)
 
 ## Auth
 
@@ -146,6 +156,8 @@ return (
   </FrontlinkProvider>
 )
 ```
+
+You can also use the `undefined` or `null` as mentioned above.
 
 ## Listening to events
 

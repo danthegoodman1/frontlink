@@ -379,10 +379,10 @@ type SetterFunction<T> = {
 }
 
 export function useSharedState<T>(
-  uniqueStateID: string,
+  uniqueStateID: string | undefined | null,
   initialValue: T
 ): [T, SetterFunction<T>] {
-  const internalEmitterID = stateUpdateInternalEmitterID(uniqueStateID)
+  const internalEmitterID = stateUpdateInternalEmitterID(uniqueStateID ?? "")
   const ctx = useContext(Ctx)
   const [state, setState] = useState<T>(initialValue)
 
@@ -395,6 +395,7 @@ export function useSharedState<T>(
         console.error("did not have context for shared state setter")
         return
       }
+      if (uniqueStateID === null || uniqueStateID === undefined) return
 
       ctx.emitSetState(
         uniqueStateID,
@@ -434,10 +435,12 @@ export function useSharedState<T>(
 }
 
 export function useSharedFunction<T extends any[]>(
-  uniqueFunctionID: string,
+  uniqueFunctionID: string | undefined | null,
   func: (...args: T) => void
 ) {
-  const internalEmitterID = callFunctionInternalEmitterID(uniqueFunctionID)
+  const internalEmitterID = callFunctionInternalEmitterID(
+    uniqueFunctionID ?? ""
+  )
   const ctx = useContext(Ctx)
 
   const caller = (...args: T) => {
@@ -447,6 +450,7 @@ export function useSharedFunction<T extends any[]>(
       console.error("did not have context for shared function caller")
       return
     }
+    if (uniqueFunctionID === null || uniqueFunctionID === undefined) return
 
     ctx.emitCallFunction(uniqueFunctionID, args)
   }
