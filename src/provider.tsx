@@ -423,7 +423,7 @@ export function useSharedState<T>(
       ctx.unsubFromRoom(uniqueStateID, "State")
       internalEmitter.removeListener(internalEmitterID, setState)
     }
-  }, [ctx])
+  }, [ctx, uniqueStateID])
 
   return [state, setter]
 }
@@ -469,7 +469,7 @@ export function useSharedFunction<T extends any[]>(
       ctx.unsubFromRoom(uniqueFunctionID, "Function")
       internalEmitter.removeListener(internalEmitterID, callerWrapper)
     }
-  }, [ctx])
+  }, [ctx, uniqueFunctionID])
 
   return caller
 }
