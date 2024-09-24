@@ -86,17 +86,11 @@ function debug(...args: any[]) {
 
 export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
-  const connectedRooms = useRef<Map<string, RoomKind>>(
-    new Map<string, RoomKind>()
-  )
-  const msgDedupe = useRef<Set<string>>(new Set<string>())
+  const connectedRooms = useRef<Map<string, RoomKind> | null>(null)
+  const msgDedupe = useRef<Set<string> | null>(null)
 
   // Close connection on unmount
   useEffect(() => {
-    if (conn.current === null) {
-      connectToWS()
-    }
-
     return () => {
       if (conn.current !== null) {
         conn.current.close()
@@ -122,8 +116,6 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       debug("using final url", url.toString())
     }
     conn.current = new WebSocket(url)
-    connectedRooms.current = new Map<string, RoomKind>()
-    msgDedupe.current = new Set<string>()
     conn.current.onmessage = (event) => {
       let msg: Message
       try {
@@ -221,6 +213,18 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         event,
       })
     }
+  }
+
+  if (conn.current === null) {
+    connectToWS()
+  }
+
+  if (connectedRooms.current === null) {
+    connectedRooms.current = new Map<string, RoomKind>()
+  }
+
+  if (msgDedupe.current === null) {
+    msgDedupe.current = new Set<string>()
   }
 
   function emitMessage(msg: Omit<Message, "MessageMS">) {
