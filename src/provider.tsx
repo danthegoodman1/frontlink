@@ -97,14 +97,6 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       connectToWS()
     }
 
-    if (connectedRooms.current === null) {
-      connectedRooms.current = new Map<string, RoomKind>()
-    }
-
-    if (msgDedupe.current === null) {
-      msgDedupe.current = new Set<string>()
-    }
-
     return () => {
       if (conn.current !== null) {
         conn.current.close()
@@ -130,6 +122,8 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       debug("using final url", url.toString())
     }
     conn.current = new WebSocket(url)
+    connectedRooms.current = new Map<string, RoomKind>()
+    msgDedupe.current = new Set<string>()
     conn.current.onmessage = (event) => {
       let msg: Message
       try {
