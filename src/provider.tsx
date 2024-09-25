@@ -86,11 +86,17 @@ function debug(...args: any[]) {
 
 export function FrontlinkProvider(props: FrontlinkProviderProps) {
   const conn = useRef<WebSocket | null>(null)
-  const connectedRooms = useRef<Map<string, RoomKind> | null>(null)
-  const msgDedupe = useRef<Set<string> | null>(null)
+  const connectedRooms = useRef<Map<string, RoomKind>>(
+    new Map<string, RoomKind>()
+  )
+  const msgDedupe = useRef<Set<string>>(new Set<string>())
 
   // Close connection on unmount
   useEffect(() => {
+    if (conn.current === null) {
+      connectToWS()
+    }
+
     return () => {
       if (conn.current !== null) {
         conn.current.close()
@@ -201,6 +207,10 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         event,
       })
 
+      // since this was probably intentional, reset the maps
+      connectedRooms.current = new Map<string, RoomKind>()
+      msgDedupe.current = new Set<string>()
+
       // Reconnect
       setTimeout(() => {
         debug("reconnecting after close")
@@ -213,18 +223,6 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         event,
       })
     }
-  }
-
-  if (conn.current === null) {
-    connectToWS()
-  }
-
-  if (connectedRooms.current === null) {
-    connectedRooms.current = new Map<string, RoomKind>()
-  }
-
-  if (msgDedupe.current === null) {
-    msgDedupe.current = new Set<string>()
   }
 
   function emitMessage(msg: Omit<Message, "MessageMS">) {
