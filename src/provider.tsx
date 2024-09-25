@@ -93,7 +93,11 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
 
   // Close connection on unmount
   useEffect(() => {
-    if (conn.current === null) {
+    if (
+      conn.current === null ||
+      conn.current.readyState === conn.current.CLOSING ||
+      conn.current.readyState === conn.current.CLOSED
+    ) {
       connectToWS()
     }
 
@@ -102,7 +106,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
         conn.current.close()
       }
     }
-  }, [])
+  }, [conn])
 
   setInterval(() => {
     debug("truncating dedupe set")
@@ -112,6 +116,9 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   printDebug = !!props.debugLog
 
   async function connectToWS() {
+    if (conn.current !== null) {
+      conn.current.close()
+    }
     // Kill the ping interval if it exists
     const url = new URL(props.api)
     if (props.preConnect) {
@@ -122,6 +129,27 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       debug("using final url", url.toString())
     }
     conn.current = new WebSocket(url)
+
+    conn.current.onopen = (event) => {
+      debug("websocket opened", event)
+
+      // Emit sub to any room that we know about
+      connectedRooms.current?.forEach((roomKind, roomID) => {
+        debug("subscribing to room on open")
+        emitMessage({
+          MessageType:
+            roomKind === "State" ? "SubscribeState" : "SubscribeFunction",
+          RoomID: roomID,
+          Value: undefined, // we don't know
+          MessageID: randomID(),
+        } as Omit<SubscribeMessage, "MessageMS">)
+      })
+
+      Emitter.emit(EventType.SocketOpened, {
+        event,
+      })
+    }
+
     conn.current.onmessage = (event) => {
       let msg: Message
       try {
@@ -181,35 +209,11 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
       }
     }
 
-    conn.current.onopen = (event) => {
-      debug("websocket opened", event)
-
-      // Emit sub to any room that we know about
-      connectedRooms.current?.forEach((roomKind, roomID) => {
-        debug("subscribing to room on open")
-        emitMessage({
-          MessageType:
-            roomKind === "State" ? "SubscribeState" : "SubscribeFunction",
-          RoomID: roomID,
-          Value: undefined, // we don't know
-          MessageID: randomID(),
-        } as Omit<SubscribeMessage, "MessageMS">)
-      })
-
-      Emitter.emit(EventType.SocketOpened, {
-        event,
-      })
-    }
-
     conn.current.onclose = (event) => {
       debug("websocket closed", event)
       Emitter.emit(EventType.SocketClosed, {
         event,
       })
-
-      // since this was probably intentional, reset the maps
-      connectedRooms.current = new Map<string, RoomKind>()
-      msgDedupe.current = new Set<string>()
 
       // Reconnect
       setTimeout(() => {
@@ -289,7 +293,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   }
 
   function subscribeToRoom(roomID: string, kind: RoomKind, initialValue?: any) {
-    if (connectedRooms.current === null || conn.current === null) {
+    if (connectedRooms.current === null) {
       return
     }
 
@@ -306,7 +310,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     }
 
     connectedRooms.current.set(roomID, kind)
-    if (conn.current?.readyState === conn.current.OPEN) {
+    if (conn.current?.readyState === conn.current?.OPEN) {
       // Send if connected, otherwise open will handle
       debug("subscribing to room on demand")
       emitMessage({
