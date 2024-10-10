@@ -91,6 +91,18 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   )
   const msgDedupe = useRef<Set<string>>(new Set<string>())
 
+
+  // closes an obsolete connection without triggering a reconnect
+  function closeCurrentConnection() {
+    if (conn.current) {
+      conn.current.onclose = null;
+      conn.current.onerror = null;
+      conn.current.onmessage = null;
+      conn.current.close();
+      conn.current = null;
+    }
+  }
+
   // Close connection on unmount
   useEffect(() => {
     if (
@@ -102,9 +114,7 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
     }
 
     return () => {
-      if (conn.current !== null) {
-        conn.current.close()
-      }
+      closeCurrentConnection()
     }
   }, [conn])
 
@@ -116,10 +126,8 @@ export function FrontlinkProvider(props: FrontlinkProviderProps) {
   printDebug = !!props.debugLog
 
   async function connectToWS() {
-    if (conn.current !== null) {
-      conn.current.close()
-    }
-    // Kill the ping interval if it exists
+    closeCurrentConnection()
+
     const url = new URL(props.api)
     if (props.preConnect) {
       const newParams = await props.preConnect()
